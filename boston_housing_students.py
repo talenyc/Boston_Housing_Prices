@@ -63,7 +63,7 @@ def explore_city_data(city_data):
     
     col = ['CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM', 'AGE', 'DIS', 'RAD',
         'TAX', 'PTRATIO', 'B', 'LSTAT']
-    df = pd.DataFrame(city_data.data, columns= col)
+    #df = pd.DataFrame(city_data.data, columns= col)
     
     i=0
     for c in col: 
@@ -71,8 +71,8 @@ def explore_city_data(city_data):
         print 'Maximum Value ', c, city_data.data[:,i].max()
         print 'Calculate mean ', c, city_data.data[:,i].mean()
         #This generates an error 
-        #print 'Calculate median ', c, city_data.data[:,i].median()
-        print 'Calculate median ', c, df[c].median()
+        print 'Calculate median ', c, np.median(city_data.data[:,i])
+        #print 'Calculate median ', c, df[c].median()
         print 'Calculate standard deviation ', c, city_data.data[:,i].std()
         i += 1
 
@@ -120,8 +120,7 @@ def learning_curve(depth, X_train, y_train, X_test, y_test):
     train_err = np.zeros(len(sizes))
     test_err = np.zeros(len(sizes))
 
-    print "Decision Tree with Max Depth: "
-    print depth
+    print "Decision Tree with Max Depth: ", depth
 
     for i, s in enumerate(sizes):
 
@@ -145,9 +144,10 @@ def learning_curve_graph(sizes, train_err, test_err):
 
     pl.figure()
     pl.title('Decision Trees: Performance vs Training Size')
-    pl.plot(sizes, test_err, lw=2, label = 'test error')
+    pl.plot(sizes, test_err, lw=2, label = 'test error' )
     pl.plot(sizes, train_err, lw=2, label = 'training error')
-    pl.legend()
+    pl.ylim (0,1)
+    pl.legend(loc=4)
     pl.xlabel('Training Size')
     pl.ylabel('Error')
     pl.show()
@@ -189,7 +189,7 @@ def model_complexity_graph(max_depth, train_err, test_err):
     pl.title('Decision Trees: Performance vs Max Depth')
     pl.plot(max_depth, test_err, lw=2, label = 'test error')
     pl.plot(max_depth, train_err, lw=2, label = 'training error')
-    pl.legend()
+    pl.legend(loc=4)
     pl.xlabel('Max Depth')
     pl.ylabel('Error')
     pl.show()
@@ -220,11 +220,13 @@ def fit_predict_model(city_data):
     # 2. Use gridearch to fine tune the Decision Tree Regressor and find the best model
     # http://scikit-learn.org/stable/modules/generated/sklearn.grid_search.GridSearchCV.html#sklearn.grid_search.GridSearchCV
     from sklearn.grid_search import GridSearchCV
-    reg = GridSearchCV(regressor, param_grid = parameters, scoring= r2_scorrer, verbose = 0)
-
+    reg = GridSearchCV(regressor, param_grid = parameters, scoring= r2_scorrer, verbose = 0, refit=True)
+    
+   
     # Fit the learner to the training data
     print "Final Model: "
     print reg.fit(X, y)
+    print " Best regressor params:",  reg.best_params_
 
     # Use the model to predict the output of a particular sample
     x = [11.95, 0.00, 18.100, 0, 0.6590, 5.6090, 90.00, 1.385, 24, 680.0, 20.20, 332.09, 12.13]
