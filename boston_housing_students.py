@@ -9,12 +9,13 @@ import pylab as pl
 from sklearn import datasets
 from sklearn.tree import DecisionTreeRegressor
 
+# this allows display of images inline in ipython notebook comment out for direct execution.
+#%matplotlib inline 
 
-%matplotlib inline 
 ################################
 ### ADD EXTRA LIBRARIES HERE ###
 ################################
-from sklearn.metrics import r2_score
+from sklearn.metrics import r2_score, mean_squared_error
 from sklearn import cross_validation 
 
 def load_data():
@@ -45,10 +46,10 @@ def explore_city_data(city_data):
     # Calculate standard deviation?
     
     # Size of data? 
-    """
+
     print 'Size of data? ', city_data.data.shape[0]
     print 'Number of features? ', city_data.data.shape[1]
-
+    """
     col = ['CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM', 'AGE', 'DIS', 'RAD',
             'TAX', 'PTRATIO', 'B', 'LSTAT']
     df = pd.DataFrame(city_data.data, columns= col)
@@ -63,18 +64,12 @@ def explore_city_data(city_data):
     
     col = ['CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM', 'AGE', 'DIS', 'RAD',
         'TAX', 'PTRATIO', 'B', 'LSTAT']
-    #df = pd.DataFrame(city_data.data, columns= col)
-    
-    i=0
-    for c in col: 
-        print 'Minimum Value ',  c , city_data.data[:,i].min()
-        print 'Maximum Value ', c, city_data.data[:,i].max()
-        print 'Calculate mean ', c, city_data.data[:,i].mean()
-        #This generates an error 
-        print 'Calculate median ', c, np.median(city_data.data[:,i])
-        #print 'Calculate median ', c, df[c].median()
-        print 'Calculate standard deviation ', c, city_data.data[:,i].std()
-        i += 1
+     
+    print 'Minimum Value ', city_data.target.min()
+    print 'Maximum Value ', city_data.target.max()
+    print 'Calculate mean ',  city_data.target.mean()
+    print 'Calculate median ', np.median(city_data.target)
+    print 'Calculate standard deviation ', city_data.target.std()
 
 
 
@@ -89,7 +84,7 @@ def performance_metric(label, prediction):
     # cross_val_score(regressor, label, prediction, cv=1)
     
     
-    return r2_score ( label, prediction)
+    return mean_squared_error ( label, prediction)
     # http://scikit-learn.org/stable/modules/classes.html#sklearn-metrics-metrics
     
 
@@ -130,10 +125,8 @@ def learning_curve(depth, X_train, y_train, X_test, y_test):
 
         # Find the performance on the training and testing set
         train_err[i] = performance_metric(y_train[:s], regressor.predict(X_train[:s]))
-        test_err[i] = performance_metric(y_test[:s], regressor.predict(X_test[:s]))
+        test_err[i] = performance_metric(y_test, regressor.predict(X_test))
         
-        #train_err[i] = regressor.score( X_train[:s], y_train[:s])
-        #test_err[i] = regressor.score( X_test[:s], y_test[:s])
 
     # Plot learning curve graph
     learning_curve_graph(sizes, train_err, test_err)
@@ -146,8 +139,8 @@ def learning_curve_graph(sizes, train_err, test_err):
     pl.title('Decision Trees: Performance vs Training Size')
     pl.plot(sizes, test_err, lw=2, label = 'test error' )
     pl.plot(sizes, train_err, lw=2, label = 'training error')
-    pl.ylim (0,1)
-    pl.legend(loc=4)
+    #pl.ylim (0,1)
+    pl.legend()
     pl.xlabel('Training Size')
     pl.ylabel('Error')
     pl.show()
@@ -159,7 +152,7 @@ def model_complexity(X_train, y_train, X_test, y_test):
     print "Model Complexity: "
 
     # We will vary the depth of decision trees from 2 to 25
-    max_depth = np.arange(1, 25)
+    max_depth = np.arange(1, 10)
     train_err = np.zeros(len(max_depth))
     test_err = np.zeros(len(max_depth))
 
@@ -202,7 +195,7 @@ def fit_predict_model(city_data):
     X, y = city_data.data, city_data.target
 
     # Setup a Decision Tree Regressor
-    regressor = DecisionTreeRegressor()
+    regressor = DecisionTreeRegressor(random_state=0)
 
     parameters = {'max_depth':(1,2,3,4,5,6,7,8,9,10)}
 
@@ -213,19 +206,19 @@ def fit_predict_model(city_data):
     # 1. Find the best performance metric
     # should be the same as your performance_metric procedure
     # http://scikit-learn.org/stable/modules/generated/sklearn.metrics.make_scorer.html
-    from sklearn.metrics import make_scorer, r2_score
-    r2_scorrer = make_scorer(r2_score)
+    from sklearn.metrics import make_scorer, r2_score, mean_squared_error
+    scorrer = make_scorer(r2_score)
 
 
     # 2. Use gridearch to fine tune the Decision Tree Regressor and find the best model
     # http://scikit-learn.org/stable/modules/generated/sklearn.grid_search.GridSearchCV.html#sklearn.grid_search.GridSearchCV
     from sklearn.grid_search import GridSearchCV
-    reg = GridSearchCV(regressor, param_grid = parameters, scoring= r2_scorrer, verbose = 0, refit=True)
-    
-   
+    reg = GridSearchCV(regressor, param_grid = parameters,  verbose = 0,  cv =3)
+
     # Fit the learner to the training data
     print "Final Model: "
     print reg.fit(X, y)
+    
     print " Best regressor params:",  reg.best_params_
 
     # Use the model to predict the output of a particular sample
